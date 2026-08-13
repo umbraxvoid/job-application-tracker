@@ -32,4 +32,8 @@ class ApplicationRepository {
         .doc(application.id)
         .set(application.toUpdateMap(), SetOptions(merge: true));
   }
+
+  Future<void> deleteApplication({required String applicationId}) async {
+    await _applications.doc(applicationId).delete();
+  }
 }

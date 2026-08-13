@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:job_application_tracker/features/applications/models/job_application.dart';
-import 'package:job_application_tracker/features/applications/providers/add_application_provider.dart';
+import 'package:job_application_tracker/features/applications/providers/application_provider.dart';
 import 'package:job_application_tracker/features/applications/screens/add_application_screen.dart';
 import 'package:job_application_tracker/features/applications/screens/application_details_screen.dart';
 import 'package:job_application_tracker/features/applications/widgets/application_card.dart';

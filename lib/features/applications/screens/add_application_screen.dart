@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:job_application_tracker/features/applications/models/job_application.dart';
-import 'package:job_application_tracker/features/applications/providers/add_application_provider.dart';
+import 'package:job_application_tracker/features/applications/providers/application_provider.dart';
 import 'package:job_application_tracker/features/applications/widgets/app_text_form_field.dart';
 
 class AddApplicationScreen extends ConsumerStatefulWidget {

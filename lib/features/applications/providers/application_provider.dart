@@ -22,7 +22,7 @@ class AddApplicationNotifier extends AsyncNotifier<List<JobApplication>> {
   Future<void> addApplication({required JobApplication application}) async {
     final oldState = state.value;
     await _repo.addApplication(application: application);
-    final newList = [...?oldState, application];
+    final newList = [application, ...?oldState];
     state = AsyncData(newList);
   }
 
@@ -37,6 +37,16 @@ class AddApplicationNotifier extends AsyncNotifier<List<JobApplication>> {
             jobApplication
           else
             application,
+      ],
+    );
+  }
+
+  Future<void> deleteApplication({required String applicationId}) async {
+    await _repo.deleteApplication(applicationId: applicationId);
+    await update(
+      (applications) => [
+        for (final application in applications)
+          if (application.id != applicationId) application,
       ],
     );
   }

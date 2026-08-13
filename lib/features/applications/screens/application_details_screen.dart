@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:job_application_tracker/features/applications/models/job_application.dart';
-import 'package:job_application_tracker/features/applications/providers/add_application_provider.dart';
+import 'package:job_application_tracker/features/applications/providers/application_provider.dart';
 
 class ApplicationDetailsScreen extends ConsumerStatefulWidget {
   final JobApplication application;
@@ -15,6 +15,7 @@ class ApplicationDetailsScreen extends ConsumerStatefulWidget {
 class _ApplicationDetailsScreenState
     extends ConsumerState<ApplicationDetailsScreen> {
   String? selection;
+  late String savedStatus;
 
   Future<void> _saveChanges() async {
     final newApplication = widget.application.copyWith(status: selection);
@@ -23,6 +24,9 @@ class _ApplicationDetailsScreenState
           .read(applicationProvider.notifier)
           .updateApplication(jobApplication: newApplication);
       if (!mounted) return;
+      setState(() {
+        savedStatus = selection!;
+      });
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Updated successfully")));
@@ -33,17 +37,55 @@ class _ApplicationDetailsScreenState
     }
   }
 
+  Future<void> _deleteApplication({required String applicationId}) async {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Are you sure you want to delete this application?"),
+
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  await ref
+                      .read(applicationProvider.notifier)
+                      .deleteApplication(applicationId: applicationId);
+                  if (!context.mounted) return;
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Something went wrong, try again")),
+                  );
+                }
+              },
+              child: Text("Delete"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
-  void didChangeDependencies() {
-    // TODO: implement didChangeDependencies
-    super.didChangeDependencies();
+  void initState() {
+    // TODO: implement initState
+    super.initState();
     selection = widget.application.status;
+    savedStatus = widget.application.status;
   }
 
   @override
   Widget build(BuildContext context) {
     final job = widget.application;
-    final buttonState = ref.watch(applicationByIdProvider(job.id!));
+    // final buttonState = ref.watch(applicationByIdProvider(job.id!));
 
     return Scaffold(
       body: SafeArea(
@@ -83,7 +125,7 @@ class _ApplicationDetailsScreenState
               ),
               if (job.location!.trim().isNotEmpty)
                 _heading("Location", job.location!),
-              if (job.jobUrl!.trim().isNotEmpty)
+              if (job.jobType.trim().isNotEmpty)
                 _heading("Job Type", job.jobType),
               _heading("Applied Date", job.appliedDate),
               if (job.jobUrl!.trim().isNotEmpty)
@@ -94,12 +136,19 @@ class _ApplicationDetailsScreenState
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   ElevatedButton(
-                    onPressed: selection == buttonState.status
+                    onPressed: selection == savedStatus
                         ? null
                         : () {
                             _saveChanges();
                           },
                     child: Text("Save Changes"),
+                  ),
+                  SizedBox(width: 10),
+                  OutlinedButton(
+                    onPressed: () {
+                      _deleteApplication(applicationId: widget.application.id!);
+                    },
+                    child: Text("Delete"),
                   ),
                 ],
               ),
