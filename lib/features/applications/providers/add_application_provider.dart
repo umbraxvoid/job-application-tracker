@@ -39,15 +39,6 @@ class AddApplicationNotifier extends AsyncNotifier<List<JobApplication>> {
             application,
       ],
     );
-    // final oldState = state.value;
-    // await _repo.updateApplication(application: jobApplication);
-    // final newList = oldState!.map((d) {
-    //   if (d.id == jobApplication.id) {
-    //     return jobApplication;
-    //   }
-    //   return d;
-    // }).toList();
-    // state = AsyncData(newList);
   }
 }
 

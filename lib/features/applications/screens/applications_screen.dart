@@ -19,39 +19,6 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
 
   final TextEditingController _controller = TextEditingController();
 
-  // List<JobApplication> searchApplication(List<JobApplication> applications) {
-  //   final text = _controller.text;
-  //   if (_controller.text.trim().isNotEmpty) {
-  //     final application = applications
-  //         .where(
-  //           (application) =>
-  //               application.companyName.toLowerCase().startsWith(
-  //                 text.toLowerCase(),
-  //               ) ||
-  //               application.jobRole.toLowerCase().startsWith(
-  //                 text.toLowerCase(),
-  //               ),
-  //         )
-  //         .toList();
-  //     if (_selectedStatus != 'All') {
-  //       final newApplication = application
-  //           .where((a) => a.status == _selectedStatus)
-  //           .toList();
-  //       return newApplication;
-  //     }
-  //     return application;
-  //   }
-  //   if (_selectedStatus != 'All') {
-  //     final newApplication = applications
-  //         .where((a) => a.status == _selectedStatus)
-  //         .toList();
-  //     return newApplication;
-  //   }
-  //   return applications;
-  // }
-
-  ///---------------------------------------------------------------- @symbols
-
   List<JobApplication> _searchApplications(List<JobApplication> applications) {
     final query = _controller.text.trim().toLowerCase();
 
@@ -66,8 +33,6 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
       return matchesSearch && matchesStatus;
     }).toList();
   }
-
-  ///------------------------------------------------------ Finish lines here
 
   @override
   Widget build(BuildContext context) {
@@ -90,11 +55,6 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
                   ),
                 );
               }
-
-              // final filteredApplications = data
-              //     .where((application) => application.status == _selectedStatus)
-              //     .toList();
-
               return SafeArea(
                 child: Column(
                   children: [
@@ -180,35 +140,6 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
                           },
                         ),
                       ),
-                    // if (_selectedStatus == "All" && data.isNotEmpty)
-                    //   Expanded(
-                    //     child: ListView.builder(
-                    //       shrinkWrap: true,
-                    //       itemCount: data.length,
-                    //       itemBuilder: (context, index) {
-                    //         final application = data[index];
-                    //         return GestureDetector(
-                    //           onTap: () {
-                    //             Navigator.push(
-                    //               context,
-                    //               MaterialPageRoute(
-                    //                 builder: (_) => ApplicationDetailsScreen(
-                    //                   application: application,
-                    //                 ),
-                    //               ),
-                    //             );
-                    //           },
-                    //           child: ApplicationCard(
-                    //             companyName: application.companyName,
-                    //             jobRole: application.jobRole,
-                    //             location: application.location!,
-                    //             status: application.status,
-                    //             appliedDate: application.appliedDate,
-                    //           ),
-                    //         );
-                    //       },
-                    //     ),
-                    //   ),
                   ],
                 ),
               );
