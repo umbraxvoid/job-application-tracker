@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "330494930548",
+    "project_id": "upsc-pre-e879c",
+    "storage_bucket": "upsc-pre-e879c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:330494930548:android:bed9b5b7a7caf05a44ab21",
+        "android_client_info": {
+          "package_name": "com.example.job_application_tracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyClM-VE3gjoKMcWLGdiQeA0wj0vqSrQr_U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
