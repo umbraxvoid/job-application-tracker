@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:job_application_tracker/features/applications/models/job_application.dart';
 import 'package:job_application_tracker/features/applications/providers/application_provider.dart';
+import 'package:job_application_tracker/features/applications/screens/edit_application_screen.dart';
 
 class ApplicationDetailsScreen extends ConsumerStatefulWidget {
   final JobApplication application;
@@ -14,144 +15,151 @@ class ApplicationDetailsScreen extends ConsumerStatefulWidget {
 
 class _ApplicationDetailsScreenState
     extends ConsumerState<ApplicationDetailsScreen> {
-  String? selection;
+  String? selectedStatus;
   late String savedStatus;
 
+  final List<String> statusList = ['Applied', 'Interview', 'Rejected', 'Offer'];
+
+  @override
+  void initState() {
+    super.initState();
+    selectedStatus = widget.application.status;
+    savedStatus = widget.application.status;
+  }
+
   Future<void> _saveChanges() async {
-    final newApplication = widget.application.copyWith(status: selection);
+    final newApplication = widget.application.copyWith(status: selectedStatus);
     try {
       await ref
           .read(applicationProvider.notifier)
           .updateApplication(jobApplication: newApplication);
       if (!mounted) return;
       setState(() {
-        savedStatus = selection!;
+        savedStatus = selectedStatus!;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Updated successfully")));
-    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Something went wrong: ${e.toString()}")),
+        const SnackBar(
+          content: Text("Status updated successfully"),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Something went wrong: ${e.toString()}"),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.redAccent,
+        ),
       );
     }
   }
 
   Future<void> _deleteApplication({required String applicationId}) async {
-    return showDialog(
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
-          title: Text("Are you sure you want to delete this application?"),
-
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text("Delete Application"),
+          content: const Text(
+            "Are you sure you want to delete this job application? This action cannot be undone.",
+          ),
           actions: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text("Cancel"),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(
+                "Cancel",
+                style: TextStyle(color: Colors.grey.shade700),
+              ),
             ),
             ElevatedButton(
-              onPressed: () async {
-                try {
-                  await ref
-                      .read(applicationProvider.notifier)
-                      .deleteApplication(applicationId: applicationId);
-                  if (!context.mounted) return;
-                  Navigator.pop(context);
-                  Navigator.pop(context);
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Something went wrong, try again")),
-                  );
-                }
-              },
-              child: Text("Delete"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text("Delete"),
             ),
           ],
         );
       },
     );
-  }
 
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    selection = widget.application.status;
-    savedStatus = widget.application.status;
+    if (confirmed != true) return;
+
+    try {
+      await ref
+          .read(applicationProvider.notifier)
+          .deleteApplication(applicationId: applicationId);
+      if (!mounted) return;
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Something went wrong, try again"),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final job = widget.application;
-    // final buttonState = ref.watch(applicationByIdProvider(job.id!));
 
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: Column(
-            spacing: 14,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 5),
-              Text(
-                job.companyName,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
-              ),
-              // Text(job.status),
-              DropdownMenu(
-                initialSelection: job.status,
-                onSelected: (value) {
-                  if (value != null) {
-                    setState(() {
-                      selection = value;
-                    });
-                  }
-                },
-                inputDecorationTheme: InputDecorationTheme(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
+      backgroundColor: const Color(0xFFF8F9FA), // Clean off-white background
+      appBar: AppBar(
+        title: const Text(
+          "Application Details",
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: "Edit Application",
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      EditApplicationScreen(application: widget.application),
                 ),
-                dropdownMenuEntries: [
-                  DropdownMenuEntry(value: "Applied", label: "Applied"),
-                  // Applied', 'Interview', 'Rejected'
-                  DropdownMenuEntry(value: "Interview", label: "Interview"),
-                  DropdownMenuEntry(value: "Rejected", label: "Rejected"),
-                ],
-              ),
-              if (job.location!.trim().isNotEmpty)
-                _heading("Location", job.location!),
-              if (job.jobType.trim().isNotEmpty)
-                _heading("Job Type", job.jobType),
-              _heading("Applied Date", job.appliedDate),
-              if (job.jobUrl!.trim().isNotEmpty)
-                _heading("Job Url", job.jobUrl!),
-              if (job.notes!.trim().isNotEmpty) _heading("Notes", job.notes!),
-              SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    onPressed: selection == savedStatus
-                        ? null
-                        : () {
-                            _saveChanges();
-                          },
-                    child: Text("Save Changes"),
-                  ),
-                  SizedBox(width: 10),
-                  OutlinedButton(
-                    onPressed: () {
-                      _deleteApplication(applicationId: widget.application.id!);
-                    },
-                    child: Text("Delete"),
-                  ),
-                ],
-              ),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildHeaderCard(job),
+              const SizedBox(height: 20),
+              _buildStatusSection(),
+              const SizedBox(height: 20),
+              _buildDetailsSection(job),
+              const SizedBox(height: 32),
+              _buildActionButtons(job.id!),
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -159,15 +167,398 @@ class _ApplicationDetailsScreenState
     );
   }
 
-  Widget _heading(String name, String data) {
+  Widget _buildHeaderCard(JobApplication job) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                height: 64,
+                width: 64,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200),
+                  image: const DecorationImage(
+                    image: NetworkImage(
+                      "https://media.wired.com/photos/5926ffe47034dc5f91bed4e8/3:2/w_2560%2Cc_limit/google-logo.jpg",
+                    ),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      job.companyName,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF111827),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      job.jobRole,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Divider(height: 1, color: Color(0xFFEEEEEE)),
+          ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 6,
+                  horizontal: 12,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: statusBoxColor(job.status),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: statusTextColor(job.status),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      job.status,
+                      style: TextStyle(
+                        color: statusTextColor(job.status),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              Icon(
+                Icons.access_time_rounded,
+                size: 16,
+                color: Colors.grey.shade500,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                "Applied: ${job.appliedDate}",
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade500,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-        SizedBox(height: 4),
-        Text(data),
+        const Padding(
+          padding: EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            "Update Status",
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF6B7280),
+            ),
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: DropdownButtonFormField<String>(
+            initialValue: selectedStatus,
+            dropdownColor: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            isExpanded: true,
+            icon: const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Color(0xFF6B7280),
+            ),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF111827),
+            ),
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+            ),
+            items: statusList.map((status) {
+              return DropdownMenuItem(value: status, child: Text(status));
+            }).toList(),
+            onChanged: (status) {
+              if (status != null) {
+                setState(() => selectedStatus = status);
+              }
+            },
+          ),
+        ),
       ],
     );
+  }
+
+  Widget _buildDetailsSection(JobApplication job) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 20, 20, 10),
+            child: Text(
+              "Application Details",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF111827),
+              ),
+            ),
+          ),
+          if (job.location.trim().isNotEmpty)
+            _buildDetailRow(
+              "Location",
+              job.location,
+              Icons.location_on_outlined,
+            ),
+          if (job.jobType.trim().isNotEmpty)
+            _buildDetailRow(
+              "Job Type",
+              job.jobType,
+              Icons.work_outline_rounded,
+            ),
+          if (job.jobUrl.trim().isNotEmpty)
+            _buildDetailRow(
+              "Job URL",
+              job.jobUrl,
+              Icons.link_rounded,
+              isLink: true,
+            ),
+          if (job.notes.trim().isNotEmpty)
+            _buildDetailRow(
+              "Notes",
+              job.notes,
+              Icons.notes_rounded,
+              isLast: true,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButtons(String id) {
+    final bool hasChanges = selectedStatus != savedStatus;
+
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          height: 54,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: hasChanges
+                  ? const Color(0xFF1769FF)
+                  : Colors.grey.shade300,
+              foregroundColor: hasChanges ? Colors.white : Colors.grey.shade600,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            onPressed: hasChanges ? _saveChanges : null,
+            child: const Text(
+              "Save Changes",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          height: 54,
+          child: OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.redAccent,
+              side: const BorderSide(color: Colors.redAccent),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            onPressed: () => _deleteApplication(applicationId: id),
+            child: const Text(
+              "Delete Application",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailRow(
+    String label,
+    String value,
+    IconData iconData, {
+    bool isLast = false,
+    bool isLink = false,
+  }) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(iconData, size: 20, color: const Color(0xFF4B5563)),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF6B7280),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    isLink
+                        ? SelectableText(
+                            value,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              color: Color(0xFF1769FF),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          )
+                        : Text(
+                            value,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              color: Color(0xFF111827),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (!isLast)
+          const Padding(
+            padding: EdgeInsets.only(left: 60, right: 20),
+            child: Divider(height: 1, color: Color(0xFFF3F4F6)),
+          ),
+      ],
+    );
+  }
+
+  Color statusBoxColor(String name) {
+    switch (name) {
+      case 'Applied':
+        return const Color(0xFFEFF6FF); // Lighter Blue
+      case 'Interview':
+        return const Color(0xFFFFF7ED); // Lighter Orange
+      case 'Rejected':
+        return const Color(0xFFFEF2F2); // Lighter Red
+      case 'Offer':
+        return const Color(0xFFECFDF5); // Lighter Green
+      default:
+        return const Color(0xFFEFF6FF);
+    }
+  }
+
+  Color statusTextColor(String name) {
+    switch (name) {
+      case 'Applied':
+        return const Color(0xFF2563EB); // Deep Blue
+      case 'Interview':
+        return const Color(0xFFEA580C); // Deep Orange
+      case 'Rejected':
+        return const Color(0xFFDC2626); // Deep Red
+      case 'Offer':
+        return const Color(0xFF059669); // Deep Green
+      default:
+        return const Color(0xFF2563EB);
+    }
   }
 }

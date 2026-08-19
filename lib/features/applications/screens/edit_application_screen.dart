@@ -3,19 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:job_application_tracker/features/applications/models/job_application.dart';
 import 'package:job_application_tracker/features/applications/providers/application_provider.dart';
 
-// Note: Consistent with the Edit screen, we use customized flat TextFormFields
-// directly in this file to guarantee the strict "no shadows/cards" design.
+// Note: Removed 'app_text_form_field.dart' import as we are using customized
+// flat TextFormFields directly in this file to guarantee the strict "no shadows/cards"
+// design requirement you asked for.
 
-class AddApplicationScreen extends ConsumerStatefulWidget {
-  const AddApplicationScreen({super.key});
+class EditApplicationScreen extends ConsumerStatefulWidget {
+  final JobApplication application;
+  const EditApplicationScreen({super.key, required this.application});
 
   @override
-  ConsumerState<AddApplicationScreen> createState() =>
-      _AddApplicationScreenState();
+  ConsumerState<EditApplicationScreen> createState() =>
+      _EditApplicationScreenState();
 }
 
-class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
-  // Fix: Use explicitly named controllers instead of an error-prone array
+class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
   late TextEditingController _companyNameController;
   late TextEditingController _jobRoleController;
   late TextEditingController _locationController;
@@ -29,28 +30,38 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
     'Contract',
     'Internship',
   ];
-  final List<String> statusList = ['Applied', 'Interview', 'Rejected', 'Offer'];
-
-  String _selectedJobType = 'Full Time';
-  String _selectedStatus = 'Applied';
-
+  late String _selectedJobType;
   final _formKey = GlobalKey<FormState>();
-  String? date;
+  late String date;
   bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _companyNameController = TextEditingController();
-    _jobRoleController = TextEditingController();
-    _locationController = TextEditingController();
-    _jobUrlController = TextEditingController();
-    _notesController = TextEditingController();
+    _companyNameController = TextEditingController(
+      text: widget.application.companyName,
+    );
+    _jobRoleController = TextEditingController(
+      text: widget.application.jobRole,
+    );
+    _locationController = TextEditingController(
+      text: widget.application.location,
+    );
+    _jobUrlController = TextEditingController(text: widget.application.jobUrl);
+    _notesController = TextEditingController(text: widget.application.notes);
+    date = widget.application.appliedDate;
+
+    // Fix: Safely initialize job type from existing data
+    if (jobType.contains(widget.application.jobType)) {
+      _selectedJobType = widget.application.jobType;
+    } else {
+      _selectedJobType = 'Full Time';
+    }
   }
 
   @override
   void dispose() {
-    // Fix: Properly dispose all controllers to prevent memory leaks
+    // Fix: Correctly dispose all controllers to prevent memory leaks
     _companyNameController.dispose();
     _jobRoleController.dispose();
     _locationController.dispose();
@@ -86,7 +97,7 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF1769FF),
+              primary: Color(0xFF1769FF), // Flat modern blue
               onPrimary: Colors.white,
               onSurface: Color(0xFF111827),
             ),
@@ -97,60 +108,42 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
     );
     if (result == null) return;
     setState(() {
+      // Formatted cleanly with leading zeros if needed
       date =
           "${result.day.toString().padLeft(2, '0')} - ${result.month.toString().padLeft(2, '0')} - ${result.year}";
     });
   }
 
-  void _setToDefault() {
-    _companyNameController.clear();
-    _jobRoleController.clear();
-    _locationController.clear();
-    _jobUrlController.clear();
-    _notesController.clear();
-    date = null;
-    _selectedJobType = 'Full Time';
-    _selectedStatus = 'Applied';
-    setState(() {});
-  }
-
   Future<void> _saveApplication() async {
     if (_formKey.currentState?.validate() != true) return;
 
-    if (date == null) {
-      _showMessage("Please select an applied date", isError: true);
-      return;
-    }
-
-    setState(() => isLoading = true);
-
-    final application = JobApplication(
+    final application = widget.application.copyWith(
       companyName: _companyNameController.text.trim(),
       jobRole: _jobRoleController.text.trim(),
       location: _locationController.text.trim(),
       jobType: _selectedJobType,
-      status: _selectedStatus,
-      appliedDate: date!,
+      status: widget.application.status,
+      appliedDate: date,
       jobUrl: _jobUrlController.text.trim(),
       notes: _notesController.text.trim(),
     );
 
     try {
+      setState(() => isLoading = true);
       await ref
           .read(applicationProvider.notifier)
-          .addApplication(application: application);
+          .updateApplication(jobApplication: application);
 
-      if (!mounted) return; // Fix: Prevent crash if navigating away
-      setState(() => isLoading = false);
-      _showMessage("Application added successfully");
-      _setToDefault();
-
-      // Optional: If you want it to pop back to the previous screen automatically
-      // Navigator.pop(context);
+      if (!mounted) return;
+      _showMessage(
+        "Application updated successfully",
+      ); // Fix: changed 'added' to 'updated'
+      Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-      setState(() => isLoading = false);
       _showMessage("Something went wrong: ${e.toString()}", isError: true);
+    } finally {
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
@@ -165,7 +158,7 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
           elevation: 0,
           scrolledUnderElevation: 0,
           title: const Text(
-            "Add Application",
+            "Edit Application",
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -177,7 +170,7 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
         body: SafeArea(
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20.0),
             child: Form(
               key: _formKey,
               child: Column(
@@ -217,37 +210,7 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
                     icon: Icons.location_on_outlined,
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildFlatDropdown(
-                          value: _selectedJobType,
-                          items: jobType,
-                          label: "Job Type",
-                          icon: Icons.work_history_outlined,
-                          onChanged: (value) {
-                            if (value != null) {
-                              setState(() => _selectedJobType = value);
-                            }
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildFlatDropdown(
-                          value: _selectedStatus,
-                          items: statusList,
-                          label: "Status",
-                          icon: Icons.info_outline_rounded,
-                          onChanged: (value) {
-                            if (value != null) {
-                              setState(() => _selectedStatus = value);
-                            }
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
+                  Row(children: [Expanded(child: _buildFlatDropdown())]),
                   const SizedBox(height: 16),
 
                   _buildFlatDatePicker(),
@@ -277,7 +240,9 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
                     height: 54,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1769FF),
+                        backgroundColor: const Color(
+                          0xFF1769FF,
+                        ), // Flat primary color
                         foregroundColor: Colors.white,
                         elevation: 0, // Strict NO shadow
                         shape: RoundedRectangleBorder(
@@ -298,7 +263,7 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
                               ),
                             )
                           : const Text(
-                              "Save Application",
+                              "Save Changes",
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -361,22 +326,27 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
           fontWeight: FontWeight.w500,
         ),
         prefixIcon: Padding(
-          padding: EdgeInsets.only(bottom: maxLines > 1 ? 60.0 : 0),
+          padding: EdgeInsets.only(
+            bottom: maxLines > 1 ? 60.0 : 0,
+          ), // Align icon to top if multi-line
           child: Icon(icon, color: const Color(0xFF6B7280), size: 22),
         ),
         filled: true,
-        fillColor: const Color(0xFFF9FAFB),
+        fillColor: const Color(0xFFF9FAFB), // Very light flat gray
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide.none, // Flat look
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+          borderSide: const BorderSide(
+            color: Color(0xFFE5E7EB),
+            width: 1,
+          ), // Subtle flat border
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -390,37 +360,34 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
     );
   }
 
-  Widget _buildFlatDropdown({
-    required String value,
-    required List<String> items,
-    required String label,
-    required IconData icon,
-    required ValueChanged<String?> onChanged,
-  }) {
+  Widget _buildFlatDropdown() {
     return DropdownButtonFormField<String>(
-      isExpanded: true,
-      initialValue: value,
+      initialValue: _selectedJobType,
       dropdownColor: Colors.white,
       icon: const Icon(
         Icons.keyboard_arrow_down_rounded,
         color: Color(0xFF6B7280),
       ),
       style: const TextStyle(
-        fontSize: 14,
+        fontSize: 15,
         color: Color(0xFF111827),
         fontWeight: FontWeight.w500,
       ),
       decoration: InputDecoration(
-        labelText: label,
+        labelText: "Job Type",
         labelStyle: const TextStyle(
           color: Color(0xFF6B7280),
           fontWeight: FontWeight.w500,
         ),
-        prefixIcon: Icon(icon, color: const Color(0xFF6B7280), size: 20),
+        prefixIcon: const Icon(
+          Icons.work_history_outlined,
+          color: Color(0xFF6B7280),
+          size: 22,
+        ),
         filled: true,
         fillColor: const Color(0xFFF9FAFB),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
+          horizontal: 16,
           vertical: 16,
         ),
         enabledBorder: OutlineInputBorder(
@@ -432,13 +399,14 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
           borderSide: const BorderSide(color: Color(0xFF1769FF), width: 1.5),
         ),
       ),
-      items: items.map((type) {
-        return DropdownMenuItem(
-          value: type,
-          child: FittedBox(child: Text(type)),
-        );
+      items: jobType.map((type) {
+        return DropdownMenuItem(value: type, child: Text(type));
       }).toList(),
-      onChanged: onChanged,
+      onChanged: (value) {
+        if (value != null) {
+          setState(() => _selectedJobType = value);
+        }
+      },
     );
   }
 
@@ -451,12 +419,7 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
         decoration: BoxDecoration(
           color: const Color(0xFFF9FAFB),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: date == null
-                ? const Color(0xFFE5E7EB)
-                : const Color(0xFF1769FF).withValues(alpha: 0.5),
-            width: 1,
-          ),
+          border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
         ),
         child: Row(
           children: [
@@ -479,25 +442,19 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  date ?? "Select a Date",
-                  style: TextStyle(
+                  date,
+                  style: const TextStyle(
                     fontSize: 15,
-                    color: date == null
-                        ? const Color(0xFF9CA3AF)
-                        : const Color(0xFF111827),
-                    fontWeight: date == null
-                        ? FontWeight.w400
-                        : FontWeight.w500,
+                    color: Color(0xFF111827),
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
             const Spacer(),
-            Icon(
-              date == null
-                  ? Icons.add_circle_outline_rounded
-                  : Icons.edit_calendar_rounded,
-              color: const Color(0xFF1769FF),
+            const Icon(
+              Icons.edit_calendar_rounded,
+              color: Color(0xFF1769FF),
               size: 20,
             ),
           ],

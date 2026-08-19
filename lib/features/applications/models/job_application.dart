@@ -4,25 +4,25 @@ class JobApplication {
   final String? id;
   final String companyName;
   final String jobRole;
-  final String? location;
+  final String location;
   final String jobType;
   final String status;
   final String appliedDate;
-  final String? jobUrl;
-  final String? notes;
+  final String jobUrl;
+  final String notes;
   final Timestamp? createdAt;
 
   const JobApplication({
     this.id,
     required this.companyName,
     required this.jobRole,
-    this.location,
+    required this.location,
     required this.jobType,
     required this.status,
     required this.appliedDate,
-    this.jobUrl,
-    this.notes,
-    required this.createdAt,
+    required this.jobUrl,
+    required this.notes,
+    this.createdAt,
   });
 
   JobApplication copyWith({
