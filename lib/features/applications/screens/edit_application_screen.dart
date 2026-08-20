@@ -3,9 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:job_application_tracker/features/applications/models/job_application.dart';
 import 'package:job_application_tracker/features/applications/providers/application_provider.dart';
 
-// Note: Removed 'app_text_form_field.dart' import as we are using customized
-// flat TextFormFields directly in this file to guarantee the strict "no shadows/cards"
-// design requirement you asked for.
+// Note: Consistent with the Add screen, we use customized flat TextFormFields
+// directly in this file to guarantee the strict "no shadows/cards" design requirement.
 
 class EditApplicationScreen extends ConsumerStatefulWidget {
   final JobApplication application;
@@ -30,7 +29,20 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
     'Contract',
     'Internship',
   ];
+
+  final List<String> _companyLogos = [
+    'default', // Default
+    'amzon',
+    'flipkart',
+    'google',
+    'meta',
+    'microsoft',
+    'netflix',
+    'nvidia',
+  ];
+
   late String _selectedJobType;
+  late String _selectedLogo; // State for the selected logo
   final _formKey = GlobalKey<FormState>();
   late String date;
   bool isLoading = false;
@@ -51,17 +63,21 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
     _notesController = TextEditingController(text: widget.application.notes);
     date = widget.application.appliedDate;
 
-    // Fix: Safely initialize job type from existing data
+    // Safely initialize job type from existing data
     if (jobType.contains(widget.application.jobType)) {
       _selectedJobType = widget.application.jobType;
     } else {
       _selectedJobType = 'Full Time';
     }
+
+    // Initialize logo from existing data if present, else fallback to default
+    // Note: If your JobApplication model has a logoUrl property, uncomment below:
+    // _selectedLogo = widget.application.logoUrl ?? _defaultLogoUrl;
+    _selectedLogo = widget.application.logoUrl;
   }
 
   @override
   void dispose() {
-    // Fix: Correctly dispose all controllers to prevent memory leaks
     _companyNameController.dispose();
     _jobRoleController.dispose();
     _locationController.dispose();
@@ -87,6 +103,90 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
     );
   }
 
+  void _showLogoSelectionSheet() {
+    FocusScope.of(context).unfocus(); // Dismiss keyboard if open
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Select Company Logo",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Flexible(
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    physics: const BouncingScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 4,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                        ),
+                    itemCount: _companyLogos.length,
+                    itemBuilder: (context, index) {
+                      final logoUrl = _companyLogos[index];
+                      final isSelected = _selectedLogo == logoUrl;
+
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedLogo = "assets/images/$logoUrl.webp";
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: isSelected
+                                  ? const Color(0xFF1769FF)
+                                  : const Color(0xFFE5E7EB),
+                              width: isSelected ? 2 : 1,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            color: const Color(0xFFF9FAFB),
+                          ),
+                          padding: const EdgeInsets.all(8),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.asset(
+                              "assets/images/$logoUrl.webp",
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(
+                                    Icons.business_rounded,
+                                    color: Colors.grey,
+                                  ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _pickDate() async {
     final result = await showDatePicker(
       context: context,
@@ -108,7 +208,6 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
     );
     if (result == null) return;
     setState(() {
-      // Formatted cleanly with leading zeros if needed
       date =
           "${result.day.toString().padLeft(2, '0')} - ${result.month.toString().padLeft(2, '0')} - ${result.year}";
     });
@@ -126,6 +225,8 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
       appliedDate: date,
       jobUrl: _jobUrlController.text.trim(),
       notes: _notesController.text.trim(),
+      // Note: If your JobApplication model accepts logoUrl, include it here:
+      logoUrl: _selectedLogo,
     );
 
     try {
@@ -135,9 +236,7 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
           .updateApplication(jobApplication: application);
 
       if (!mounted) return;
-      _showMessage(
-        "Application updated successfully",
-      ); // Fix: changed 'added' to 'updated'
+      _showMessage("Application updated successfully");
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
@@ -178,6 +277,11 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
                 children: [
                   _buildSectionLabel("Company Details"),
                   const SizedBox(height: 12),
+
+                  // Flat Company Logo Picker
+                  _buildFlatLogoPicker(),
+                  const SizedBox(height: 16),
+
                   _buildFlatTextField(
                     controller: _companyNameController,
                     label: "Company Name",
@@ -281,8 +385,6 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
     );
   }
 
-  // --- Flat UI Helper Methods --- //
-
   Widget _buildSectionLabel(String text) {
     return Text(
       text,
@@ -291,6 +393,69 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
         fontWeight: FontWeight.w600,
         color: Color(0xFF6B7280),
         letterSpacing: 0.5,
+      ),
+    );
+  }
+
+  Widget _buildFlatLogoPicker() {
+    return InkWell(
+      onTap: _showLogoSelectionSheet,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              height: 40,
+              width: 40,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.white,
+                border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(7),
+                child: Image.asset(
+                  _selectedLogo,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Icon(Icons.business_rounded, color: Colors.grey),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Company Logo",
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Color(0xFF111827),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    "Tap to change logo",
+                    style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: Color(0xFF9CA3AF),
+              size: 24,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -326,27 +491,22 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
           fontWeight: FontWeight.w500,
         ),
         prefixIcon: Padding(
-          padding: EdgeInsets.only(
-            bottom: maxLines > 1 ? 60.0 : 0,
-          ), // Align icon to top if multi-line
+          padding: EdgeInsets.only(bottom: maxLines > 1 ? 60.0 : 0),
           child: Icon(icon, color: const Color(0xFF6B7280), size: 22),
         ),
         filled: true,
-        fillColor: const Color(0xFFF9FAFB), // Very light flat gray
+        fillColor: const Color(0xFFF9FAFB),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none, // Flat look
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFFE5E7EB),
-            width: 1,
-          ), // Subtle flat border
+          borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

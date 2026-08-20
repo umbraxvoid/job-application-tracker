@@ -31,8 +31,22 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
   ];
   final List<String> statusList = ['Applied', 'Interview', 'Rejected', 'Offer'];
 
+  // 10+ Company Logos + 1 Default (Using Clearbit APIs & UI Avatars for generic)
+  final String _defaultLogoUrl = 'assets/images/default.webp';
+  final List<String> _companyLogos = [
+    'default', // Default
+    'amzon',
+    'flipkart',
+    'google',
+    'meta',
+    'microsoft',
+    'netflix',
+    'nvidia',
+  ];
+
   String _selectedJobType = 'Full Time';
   String _selectedStatus = 'Applied';
+  late String _selectedLogo; // State for the selected logo
 
   final _formKey = GlobalKey<FormState>();
   String? date;
@@ -46,6 +60,7 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
     _locationController = TextEditingController();
     _jobUrlController = TextEditingController();
     _notesController = TextEditingController();
+    _selectedLogo = _defaultLogoUrl; // Pre-select default logo
   }
 
   @override
@@ -102,6 +117,90 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
     });
   }
 
+  void _showLogoSelectionSheet() {
+    FocusScope.of(context).unfocus(); // Dismiss keyboard if open
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Select Company Logo",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Flexible(
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    physics: const BouncingScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 4,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                        ),
+                    itemCount: _companyLogos.length,
+                    itemBuilder: (context, index) {
+                      final logoUrl = _companyLogos[index];
+                      final isSelected = _selectedLogo == logoUrl;
+
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedLogo = "assets/images/$logoUrl.webp";
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: isSelected
+                                  ? const Color(0xFF1769FF)
+                                  : const Color(0xFFE5E7EB),
+                              width: isSelected ? 2 : 1,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            color: const Color(0xFFF9FAFB),
+                          ),
+                          padding: const EdgeInsets.all(8),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.asset(
+                              "assets/images/$logoUrl.webp",
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(
+                                    Icons.business_rounded,
+                                    color: Colors.grey,
+                                  ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _setToDefault() {
     _companyNameController.clear();
     _jobRoleController.clear();
@@ -111,6 +210,7 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
     date = null;
     _selectedJobType = 'Full Time';
     _selectedStatus = 'Applied';
+    _selectedLogo = _defaultLogoUrl; // Reset logo
     setState(() {});
   }
 
@@ -133,6 +233,9 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
       appliedDate: date!,
       jobUrl: _jobUrlController.text.trim(),
       notes: _notesController.text.trim(),
+      // Note: Make sure your JobApplication model accepts a logoUrl parameter
+      // if you wish to store it in your database!
+      logoUrl: _selectedLogo,
     );
 
     try {
@@ -185,6 +288,11 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
                 children: [
                   _buildSectionLabel("Company Details"),
                   const SizedBox(height: 12),
+
+                  // New Logo Picker Feature
+                  _buildFlatLogoPicker(),
+                  const SizedBox(height: 16),
+
                   _buildFlatTextField(
                     controller: _companyNameController,
                     label: "Company Name",
@@ -326,6 +434,69 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
         fontWeight: FontWeight.w600,
         color: Color(0xFF6B7280),
         letterSpacing: 0.5,
+      ),
+    );
+  }
+
+  Widget _buildFlatLogoPicker() {
+    return InkWell(
+      onTap: _showLogoSelectionSheet,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              height: 40,
+              width: 40,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.white,
+                border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(7),
+                child: Image.asset(
+                  _selectedLogo,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Icon(Icons.business_rounded, color: Colors.grey),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Company Logo",
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Color(0xFF111827),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    "Tap to select logo",
+                    style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: Color(0xFF9CA3AF),
+              size: 24,
+            ),
+          ],
+        ),
       ),
     );
   }

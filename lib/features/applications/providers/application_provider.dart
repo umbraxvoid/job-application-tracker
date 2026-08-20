@@ -20,10 +20,12 @@ class AddApplicationNotifier extends AsyncNotifier<List<JobApplication>> {
   }
 
   Future<void> addApplication({required JobApplication application}) async {
-    final oldState = state.value;
-    await _repo.addApplication(application: application);
-    final newList = [application, ...?oldState];
-    state = AsyncData(newList);
+    final snapshot = await _repo.addApplication(application: application);
+    await update((applications) => [snapshot, ...applications]);
+    // final oldState = state.value;
+    // final snapshot = await _repo.addApplication(application: application);
+    // final newList = [snapshot, ...?oldState];
+    // state = AsyncData(newList);
   }
 
   Future<void> updateApplication({
@@ -55,13 +57,19 @@ class AddApplicationNotifier extends AsyncNotifier<List<JobApplication>> {
 final applicationProvider =
     AsyncNotifierProvider<AddApplicationNotifier, List<JobApplication>>(
       AddApplicationNotifier.new,
+      retry: (errorCount, error) => null,
     );
 
-final applicationByIdProvider = Provider.family<JobApplication, String>((
+final applicationByIdProvider = Provider.family<JobApplication?, String>((
   ref,
   id,
 ) {
-  final jobs = ref.watch(applicationProvider).value;
-  final job = jobs!.where((j) => j.id == id).first;
-  return job;
+  final jobs = ref.watch(applicationProvider).value ?? [];
+  // final job = jobs!.where((j) => j.id == id).first;
+  for (final application in jobs) {
+    if (application.id == id) {
+      return application;
+    }
+  }
+  return null;
 });

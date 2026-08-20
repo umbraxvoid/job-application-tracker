@@ -4,6 +4,7 @@ class JobApplication {
   final String? id;
   final String companyName;
   final String jobRole;
+  final String logoUrl;
   final String location;
   final String jobType;
   final String status;
@@ -16,6 +17,7 @@ class JobApplication {
     this.id,
     required this.companyName,
     required this.jobRole,
+    required this.logoUrl,
     required this.location,
     required this.jobType,
     required this.status,
@@ -29,6 +31,7 @@ class JobApplication {
     String? id,
     String? companyName,
     String? jobRole,
+    String? logoUrl,
     String? location,
     String? jobType,
     String? status,
@@ -40,6 +43,7 @@ class JobApplication {
       id: id ?? this.id,
       companyName: companyName ?? this.companyName,
       jobRole: jobRole ?? this.jobRole,
+      logoUrl: logoUrl ?? this.logoUrl,
       location: location ?? this.location,
       jobType: jobType ?? this.jobType,
       status: status ?? this.status,
@@ -55,6 +59,7 @@ class JobApplication {
       'id': id,
       'companyName': companyName,
       'jobRole': jobRole,
+      'logoUrl': logoUrl,
       'location': location,
       'jobType': jobType,
       'status': status,
@@ -69,6 +74,7 @@ class JobApplication {
     return {
       'companyName': companyName,
       'jobRole': jobRole,
+      'logoUrl': logoUrl,
       'location': location,
       'jobType': jobType,
       'status': status,
@@ -83,6 +89,7 @@ class JobApplication {
       id: id,
       companyName: map['companyName'] as String,
       jobRole: map['jobRole'] as String,
+      logoUrl: map['logoUrl'] as String,
       location: map['location'],
       jobType: map['jobType'] as String,
       status: map['status'] as String,

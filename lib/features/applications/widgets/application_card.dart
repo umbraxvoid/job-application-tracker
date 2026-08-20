@@ -6,6 +6,8 @@ class ApplicationCard extends StatelessWidget {
   final String location;
   final String status;
   final String appliedDate;
+  final String logoUrl;
+
   const ApplicationCard({
     super.key,
     required this.companyName,
@@ -13,80 +15,88 @@ class ApplicationCard extends StatelessWidget {
     required this.location,
     required this.status,
     required this.appliedDate,
+    required this.logoUrl,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        // boxShadow: [BoxShadow(color: Colors.grey.shade300, blurRadius: 4)],
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade300, width: 0.8),
+        color: Colors.white, // No BoxShadow
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFE5E7EB),
+          width: 1.2,
+        ), // Clean flat border
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  height: 50,
-                  width: 50,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage(
-                        "https://media.wired.com/photos/5926ffe47034dc5f91bed4e8/3:2/w_2560%2Cc_limit/google-logo.jpg",
-                      ),
-                    ),
-                    color: Color(0xFFEDF3FD),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Center(
-                    child: Text(
-                      // companyName[0],
-                      "",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Logo Placeholder
+              Container(
+                height: 48,
+                width: 48,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: const Color(0xFFF3F4F6), width: 1),
+                  borderRadius: BorderRadius.circular(12),
+                  image: DecorationImage(
+                    image: AssetImage(logoUrl),
+                    fit: BoxFit.cover,
                   ),
                 ),
-                SizedBox(width: 10),
-                Column(
+              ),
+              const SizedBox(width: 14),
+
+              // Text Content
+              Expanded(
+                // Fix: Replaced hardcoded width with Expanded to prevent overflows
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       companyName,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
+                        color: Color(0xFF111827),
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       jobRole,
-                      style: TextStyle(color: Color(0xFF494953), fontSize: 15),
+                      style: const TextStyle(
+                        color: Color(0xFF4B5563),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.location_on_outlined,
-                          size: 18,
-                          color: Color(0xFF7B7D85),
+                          size: 14,
+                          color: Color(0xFF9CA3AF),
                         ),
-                        SizedBox(width: 4),
-                        SizedBox(
-                          width: 100,
+                        const SizedBox(width: 4),
+                        Expanded(
+                          // Protects against extremely long location names
                           child: Text(
-                            location,
-                            style: TextStyle(color: Color(0xFF7B7D85)),
+                            location.isEmpty ? 'Remote' : location,
+                            style: const TextStyle(
+                              color: Color(0xFF6B7280),
+                              fontSize: 13,
+                            ),
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -94,67 +104,100 @@ class ApplicationCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                Spacer(),
-                Container(
-                  padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    color: statusBoxColor(status),
-                  ),
-                  child: Text(
-                    "• $status",
-                    style: TextStyle(color: statusTextColor(status)),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  Icons.calendar_month_sharp,
-                  size: 18,
-                  color: Color(0xFF7B7D85),
-                ),
+              ),
+              const SizedBox(width: 8),
 
-                SizedBox(width: 4),
-                Text(
-                  "Applied on $appliedDate",
-                  style: TextStyle(color: Color(0xFF7B7D85)),
+              // Status Badge
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 6,
+                  horizontal: 10,
                 ),
-              ],
-            ),
-          ],
-        ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: _statusBoxColor(status),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _statusTextColor(status),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      status,
+                      style: TextStyle(
+                        color: _statusTextColor(status),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Divider(height: 1, color: Color(0xFFF3F4F6)),
+          ),
+
+          Row(
+            children: [
+              const Icon(
+                Icons.calendar_month_outlined,
+                size: 16,
+                color: Color(0xFF9CA3AF),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                "Applied on $appliedDate",
+                style: const TextStyle(
+                  color: Color(0xFF6B7280),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Color statusBoxColor(String name) {
+  Color _statusBoxColor(String name) {
     switch (name) {
       case 'Applied':
-        return Color(0xFFEDF3FD);
-
+        return const Color(0xFFEFF6FF); // Lighter Blue
       case 'Interview':
-        return Color(0xFFFEF8F0);
+        return const Color(0xFFFFF7ED); // Lighter Orange
       case 'Rejected':
-        return Color(0xFFFEF2F2);
+        return const Color(0xFFFEF2F2); // Lighter Red
+      case 'Offer':
+        return const Color(0xFFECFDF5); // Fix: Added Lighter Green for Offer
       default:
-        return Color(0xFFEDF3FD);
+        return const Color(0xFFEFF6FF);
     }
   }
 
-  Color statusTextColor(String name) {
+  Color _statusTextColor(String name) {
     switch (name) {
       case 'Applied':
-        return Color(0xFF004FD7);
-
+        return const Color(0xFF2563EB); // Deep Blue
       case 'Interview':
-        return Color(0xFFF57401);
+        return const Color(0xFFEA580C); // Deep Orange
       case 'Rejected':
-        return Color(0xFFD3121A);
+        return const Color(0xFFDC2626); // Deep Red
+      case 'Offer':
+        return const Color(0xFF059669); // Fix: Added Deep Green for Offer
       default:
-        return Color(0xFFD3121A);
+        return const Color(0xFF2563EB);
     }
   }
 }

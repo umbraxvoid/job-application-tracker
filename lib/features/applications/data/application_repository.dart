@@ -18,13 +18,21 @@ class ApplicationRepository {
     return applications;
   }
 
-  Future<void> addApplication({required JobApplication application}) async {
+  Future<JobApplication> addApplication({
+    required JobApplication application,
+  }) async {
+    DocumentReference docRef = _applications.doc();
     final data = {
       ...application.toMap(),
+      'id': docRef.id,
       'createdAt': FieldValue.serverTimestamp(),
     };
-
-    await _applications.add(data);
+    await _applications.doc(docRef.id).set(data).timeout(Duration(seconds: 3));
+    final snapshot = await docRef.get();
+    return JobApplication.fromMap(
+      snapshot.data() as Map<String, dynamic>,
+      snapshot.id,
+    );
   }
 
   Future<void> updateApplication({required JobApplication application}) async {

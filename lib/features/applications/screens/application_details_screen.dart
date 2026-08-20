@@ -115,7 +115,9 @@ class _ApplicationDetailsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final job = widget.application;
+    final job =
+        ref.watch(applicationByIdProvider(widget.application.id!)) ??
+        widget.application;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA), // Clean off-white background
@@ -136,8 +138,7 @@ class _ApplicationDetailsScreenState
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) =>
-                      EditApplicationScreen(application: widget.application),
+                  builder: (_) => EditApplicationScreen(application: job),
                 ),
               );
             },
@@ -194,10 +195,8 @@ class _ApplicationDetailsScreenState
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.grey.shade200),
-                  image: const DecorationImage(
-                    image: NetworkImage(
-                      "https://media.wired.com/photos/5926ffe47034dc5f91bed4e8/3:2/w_2560%2Cc_limit/google-logo.jpg",
-                    ),
+                  image: DecorationImage(
+                    image: AssetImage(job.logoUrl),
                     fit: BoxFit.cover,
                   ),
                 ),
