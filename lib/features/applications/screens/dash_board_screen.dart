@@ -15,8 +15,7 @@ class _DashBoardScreenState extends ConsumerState<DashBoardScreen> {
     final applicationsAsync = ref.watch(applicationProvider);
 
     return Scaffold(
-      backgroundColor:
-          Colors.white, // Pure white background matching other screens
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,

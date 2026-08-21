@@ -33,7 +33,6 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
 
   @override
   void dispose() {
-    // Fix: Properly dispose of the search controller to prevent memory leaks
     _searchController.dispose();
     super.dispose();
   }
@@ -310,20 +309,22 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          onPressed: () async {
-            FocusManager.instance.primaryFocus?.unfocus();
+          onPressed: applicationsAsync.hasValue
+              ? () async {
+                  FocusManager.instance.primaryFocus?.unfocus();
 
-            await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => AddApplicationScreen()),
-            );
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => AddApplicationScreen()),
+                  );
 
-            if (!mounted) return;
+                  if (!mounted) return;
 
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              FocusManager.instance.primaryFocus?.unfocus();
-            });
-          },
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    FocusManager.instance.primaryFocus?.unfocus();
+                  });
+                }
+              : null,
           child: const Icon(Icons.add_rounded, size: 28),
         ),
       ),

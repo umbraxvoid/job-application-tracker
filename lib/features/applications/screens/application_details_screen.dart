@@ -17,6 +17,7 @@ class _ApplicationDetailsScreenState
     extends ConsumerState<ApplicationDetailsScreen> {
   String? selectedStatus;
   late String savedStatus;
+  bool isLoading = false;
 
   final List<String> statusList = ['Applied', 'Interview', 'Rejected', 'Offer'];
 
@@ -27,9 +28,12 @@ class _ApplicationDetailsScreenState
     savedStatus = widget.application.status;
   }
 
-  Future<void> _saveChanges() async {
-    final newApplication = widget.application.copyWith(status: selectedStatus);
+  Future<void> _saveChanges(JobApplication application) async {
+    final newApplication = application.copyWith(status: selectedStatus);
     try {
+      setState(() {
+        isLoading = true;
+      });
       await ref
           .read(applicationProvider.notifier)
           .updateApplication(jobApplication: newApplication);
@@ -44,6 +48,9 @@ class _ApplicationDetailsScreenState
           backgroundColor: Colors.green,
         ),
       );
+      setState(() {
+        isLoading = false;
+      });
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -53,6 +60,10 @@ class _ApplicationDetailsScreenState
           backgroundColor: Colors.redAccent,
         ),
       );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -96,12 +107,18 @@ class _ApplicationDetailsScreenState
     if (confirmed != true) return;
 
     try {
+      setState(() {
+        isLoading = true;
+      });
       await ref
           .read(applicationProvider.notifier)
           .deleteApplication(applicationId: applicationId);
       if (!mounted) return;
       Navigator.pop(context);
     } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -159,7 +176,7 @@ class _ApplicationDetailsScreenState
               const SizedBox(height: 20),
               _buildDetailsSection(job),
               const SizedBox(height: 32),
-              _buildActionButtons(job.id!),
+              _buildActionButtons(job, isLoading),
               const SizedBox(height: 20),
             ],
           ),
@@ -383,10 +400,10 @@ class _ApplicationDetailsScreenState
               ),
             ),
           ),
-          if (job.location.trim().isNotEmpty)
+          if (job.location != null)
             _buildDetailRow(
               "Location",
-              job.location,
+              job.location!,
               Icons.location_on_outlined,
             ),
           if (job.jobType.trim().isNotEmpty)
@@ -395,17 +412,17 @@ class _ApplicationDetailsScreenState
               job.jobType,
               Icons.work_outline_rounded,
             ),
-          if (job.jobUrl.trim().isNotEmpty)
+          if (job.jobUrl != null)
             _buildDetailRow(
               "Job URL",
-              job.jobUrl,
+              job.jobUrl!,
               Icons.link_rounded,
               isLink: true,
             ),
-          if (job.notes.trim().isNotEmpty)
+          if (job.notes != null)
             _buildDetailRow(
               "Notes",
-              job.notes,
+              job.notes!,
               Icons.notes_rounded,
               isLast: true,
             ),
@@ -414,7 +431,7 @@ class _ApplicationDetailsScreenState
     );
   }
 
-  Widget _buildActionButtons(String id) {
+  Widget _buildActionButtons(JobApplication application, bool isLoading) {
     final bool hasChanges = selectedStatus != savedStatus;
 
     return Column(
@@ -433,7 +450,12 @@ class _ApplicationDetailsScreenState
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-            onPressed: hasChanges ? _saveChanges : null,
+            // onPressed: hasChanges ? _saveChanges() : null,
+            onPressed: isLoading == true
+                ? null
+                : () {
+                    _saveChanges(application);
+                  },
             child: const Text(
               "Save Changes",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
@@ -452,7 +474,9 @@ class _ApplicationDetailsScreenState
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-            onPressed: () => _deleteApplication(applicationId: id),
+            onPressed: isLoading == true
+                ? null
+                : () => _deleteApplication(applicationId: application.id!),
             child: const Text(
               "Delete Application",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),

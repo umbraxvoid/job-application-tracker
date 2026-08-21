@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class ApplicationCard extends StatelessWidget {
   final String companyName;
   final String jobRole;
-  final String location;
+  final String? location;
   final String status;
   final String appliedDate;
   final String logoUrl;
@@ -12,7 +12,7 @@ class ApplicationCard extends StatelessWidget {
     super.key,
     required this.companyName,
     required this.jobRole,
-    required this.location,
+    this.location,
     required this.status,
     required this.appliedDate,
     required this.logoUrl,
@@ -91,7 +91,7 @@ class ApplicationCard extends StatelessWidget {
                         Expanded(
                           // Protects against extremely long location names
                           child: Text(
-                            location.isEmpty ? 'Remote' : location,
+                            location == null ? 'Remote' : location!,
                             style: const TextStyle(
                               color: Color(0xFF6B7280),
                               fontSize: 13,

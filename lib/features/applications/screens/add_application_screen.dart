@@ -3,9 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:job_application_tracker/features/applications/models/job_application.dart';
 import 'package:job_application_tracker/features/applications/providers/application_provider.dart';
 
-// Note: Consistent with the Edit screen, we use customized flat TextFormFields
-// directly in this file to guarantee the strict "no shadows/cards" design.
-
 class AddApplicationScreen extends ConsumerStatefulWidget {
   const AddApplicationScreen({super.key});
 
@@ -15,7 +12,6 @@ class AddApplicationScreen extends ConsumerStatefulWidget {
 }
 
 class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
-  // Fix: Use explicitly named controllers instead of an error-prone array
   late TextEditingController _companyNameController;
   late TextEditingController _jobRoleController;
   late TextEditingController _locationController;
@@ -30,8 +26,6 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
     'Internship',
   ];
   final List<String> statusList = ['Applied', 'Interview', 'Rejected', 'Offer'];
-
-  // 10+ Company Logos + 1 Default (Using Clearbit APIs & UI Avatars for generic)
   final String _defaultLogoUrl = 'assets/images/default.webp';
   final List<String> _companyLogos = [
     'default', // Default
@@ -65,7 +59,6 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
 
   @override
   void dispose() {
-    // Fix: Properly dispose all controllers to prevent memory leaks
     _companyNameController.dispose();
     _jobRoleController.dispose();
     _locationController.dispose();
@@ -92,11 +85,12 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
   }
 
   Future<void> _pickDate() async {
+    final now = DateTime.now();
     final result = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2030),
+      initialDate: now,
+      firstDate: DateTime(now.year - 3),
+      lastDate: now,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -154,13 +148,14 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
                         ),
                     itemCount: _companyLogos.length,
                     itemBuilder: (context, index) {
-                      final logoUrl = _companyLogos[index];
+                      final logoUrl =
+                          "assets/images/${_companyLogos[index]}.webp";
                       final isSelected = _selectedLogo == logoUrl;
 
                       return GestureDetector(
                         onTap: () {
                           setState(() {
-                            _selectedLogo = "assets/images/$logoUrl.webp";
+                            _selectedLogo = logoUrl;
                           });
                           Navigator.pop(context);
                         },
@@ -179,7 +174,7 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
                             child: Image.asset(
-                              "assets/images/$logoUrl.webp",
+                              logoUrl,
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) =>
                                   const Icon(
@@ -227,12 +222,18 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
     final application = JobApplication(
       companyName: _companyNameController.text.trim(),
       jobRole: _jobRoleController.text.trim(),
-      location: _locationController.text.trim(),
+      location: _locationController.text.trim().isEmpty
+          ? null
+          : _locationController.text.trim(),
       jobType: _selectedJobType,
       status: _selectedStatus,
       appliedDate: date!,
-      jobUrl: _jobUrlController.text.trim(),
-      notes: _notesController.text.trim(),
+      jobUrl: _jobUrlController.text.trim().isEmpty
+          ? null
+          : _jobUrlController.text.trim(),
+      notes: _notesController.text.trim().isEmpty
+          ? null
+          : _notesController.text.trim(),
       // Note: Make sure your JobApplication model accepts a logoUrl parameter
       // if you wish to store it in your database!
       logoUrl: _selectedLogo,

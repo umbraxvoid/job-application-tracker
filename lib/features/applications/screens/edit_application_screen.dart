@@ -3,9 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:job_application_tracker/features/applications/models/job_application.dart';
 import 'package:job_application_tracker/features/applications/providers/application_provider.dart';
 
-// Note: Consistent with the Add screen, we use customized flat TextFormFields
-// directly in this file to guarantee the strict "no shadows/cards" design requirement.
-
 class EditApplicationScreen extends ConsumerStatefulWidget {
   final JobApplication application;
   const EditApplicationScreen({super.key, required this.application});
@@ -70,9 +67,6 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
       _selectedJobType = 'Full Time';
     }
 
-    // Initialize logo from existing data if present, else fallback to default
-    // Note: If your JobApplication model has a logoUrl property, uncomment below:
-    // _selectedLogo = widget.application.logoUrl ?? _defaultLogoUrl;
     _selectedLogo = widget.application.logoUrl;
   }
 
@@ -140,13 +134,14 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
                         ),
                     itemCount: _companyLogos.length,
                     itemBuilder: (context, index) {
-                      final logoUrl = _companyLogos[index];
+                      final logoUrl =
+                          "assets/images/${_companyLogos[index]}.webp";
                       final isSelected = _selectedLogo == logoUrl;
 
                       return GestureDetector(
                         onTap: () {
                           setState(() {
-                            _selectedLogo = "assets/images/$logoUrl.webp";
+                            _selectedLogo = logoUrl;
                           });
                           Navigator.pop(context);
                         },
@@ -165,7 +160,7 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
                             child: Image.asset(
-                              "assets/images/$logoUrl.webp",
+                              logoUrl,
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) =>
                                   const Icon(
@@ -219,13 +214,18 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
     final application = widget.application.copyWith(
       companyName: _companyNameController.text.trim(),
       jobRole: _jobRoleController.text.trim(),
-      location: _locationController.text.trim(),
+      location: _locationController.text.trim().isNotEmpty
+          ? _locationController.text.trim()
+          : null,
       jobType: _selectedJobType,
       status: widget.application.status,
       appliedDate: date,
-      jobUrl: _jobUrlController.text.trim(),
-      notes: _notesController.text.trim(),
-      // Note: If your JobApplication model accepts logoUrl, include it here:
+      jobUrl: _jobUrlController.text.trim().isNotEmpty
+          ? _jobUrlController.text.trim()
+          : null,
+      notes: _notesController.text.trim().isNotEmpty
+          ? _notesController.text.trim()
+          : null,
       logoUrl: _selectedLogo,
     );
 

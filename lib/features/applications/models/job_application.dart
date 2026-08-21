@@ -1,16 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class JobApplication {
+  static const _validator = ['Applied', 'Rejected', 'Offer', 'Interview'];
+  static const Object _unset = Object();
+
   final String? id;
   final String companyName;
   final String jobRole;
   final String logoUrl;
-  final String location;
   final String jobType;
   final String status;
   final String appliedDate;
-  final String jobUrl;
-  final String notes;
+  final String? location;
+  final String? jobUrl;
+  final String? notes;
   final Timestamp? createdAt;
 
   const JobApplication({
@@ -18,39 +21,39 @@ class JobApplication {
     required this.companyName,
     required this.jobRole,
     required this.logoUrl,
-    required this.location,
     required this.jobType,
     required this.status,
     required this.appliedDate,
-    required this.jobUrl,
-    required this.notes,
+    this.location,
+    this.jobUrl,
+    this.notes,
     this.createdAt,
   });
 
   JobApplication copyWith({
-    String? id,
     String? companyName,
     String? jobRole,
     String? logoUrl,
-    String? location,
+    Object? location = _unset,
     String? jobType,
     String? status,
     String? appliedDate,
-    String? jobUrl,
-    String? notes,
+    Object? jobUrl = _unset,
+    Object? notes = _unset,
   }) {
     return JobApplication(
-      id: id ?? this.id,
+      id: id,
       companyName: companyName ?? this.companyName,
       jobRole: jobRole ?? this.jobRole,
       logoUrl: logoUrl ?? this.logoUrl,
-      location: location ?? this.location,
+      location: identical(location, _unset)
+          ? this.location
+          : location as String?,
       jobType: jobType ?? this.jobType,
       status: status ?? this.status,
       appliedDate: appliedDate ?? this.appliedDate,
-      jobUrl: jobUrl ?? this.jobUrl,
-      notes: notes ?? this.notes,
-      createdAt: createdAt,
+      jobUrl: identical(jobUrl, _unset) ? this.jobUrl : jobUrl as String?,
+      notes: identical(notes, _unset) ? this.notes : notes as String?,
     );
   }
 
@@ -87,16 +90,25 @@ class JobApplication {
   factory JobApplication.fromMap(Map<String, dynamic> map, String id) {
     return JobApplication(
       id: id,
-      companyName: map['companyName'] as String,
-      jobRole: map['jobRole'] as String,
-      logoUrl: map['logoUrl'] as String,
-      location: map['location'],
-      jobType: map['jobType'] as String,
-      status: map['status'] as String,
-      appliedDate: map['appliedDate'] as String,
-      jobUrl: map['jobUrl'],
-      notes: map['notes'],
-      createdAt: map['createdAt'] as Timestamp,
+      companyName: map['companyName'] is String
+          ? map['companyName']
+          : 'Unknown Company',
+      jobRole: map['jobRole'] is String ? map['jobRole'] : 'Unknown Job Role',
+      logoUrl: map['logoUrl'] is String
+          ? map['logoUrl']
+          : 'assets/images/default.webp',
+
+      jobType: map['jobType'] is String ? map['jobType'] : 'Unknown Job Type',
+      status: map['status'] is String && _validator.contains(map['status'])
+          ? map['status']
+          : 'Applied',
+      appliedDate: map['appliedDate'] is String
+          ? map['appliedDate']
+          : "Unknown applied date",
+      location: map['location'] is String ? map['location'] : null,
+      jobUrl: map['jobUrl'] is String ? map['jobUrl'] : null,
+      notes: map['notes'] is String ? map['notes'] : null,
+      createdAt: map['createdAt'] is Timestamp ? map['createdAt'] : null,
     );
   }
 }

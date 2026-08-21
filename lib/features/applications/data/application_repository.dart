@@ -27,7 +27,7 @@ class ApplicationRepository {
       'id': docRef.id,
       'createdAt': FieldValue.serverTimestamp(),
     };
-    await _applications.doc(docRef.id).set(data).timeout(Duration(seconds: 3));
+    await _applications.doc(docRef.id).set(data);
     final snapshot = await docRef.get();
     return JobApplication.fromMap(
       snapshot.data() as Map<String, dynamic>,
@@ -36,9 +36,7 @@ class ApplicationRepository {
   }
 
   Future<void> updateApplication({required JobApplication application}) async {
-    await _applications
-        .doc(application.id)
-        .set(application.toUpdateMap(), SetOptions(merge: true));
+    await _applications.doc(application.id).update(application.toUpdateMap());
   }
 
   Future<void> deleteApplication({required String applicationId}) async {
