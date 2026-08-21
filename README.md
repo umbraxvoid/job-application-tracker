@@ -130,7 +130,7 @@ flutter doctor
 ### Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/umbraxvoid/job-application-tracker.git
 cd job_application_tracker
 ```
 
