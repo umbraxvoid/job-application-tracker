@@ -10,7 +10,7 @@ class JobApplication {
   final String logoUrl;
   final String jobType;
   final String status;
-  final String appliedDate;
+  final DateTime appliedDate;
   final String? location;
   final String? jobUrl;
   final String? notes;
@@ -37,7 +37,7 @@ class JobApplication {
     Object? location = _unset,
     String? jobType,
     String? status,
-    String? appliedDate,
+    DateTime? appliedDate,
     Object? jobUrl = _unset,
     Object? notes = _unset,
   }) {
@@ -102,9 +102,9 @@ class JobApplication {
       status: map['status'] is String && _validator.contains(map['status'])
           ? map['status']
           : 'Applied',
-      appliedDate: map['appliedDate'] is String
-          ? map['appliedDate']
-          : "Unknown applied date",
+      appliedDate: map['appliedDate'] is Timestamp
+          ? (map['appliedDate'] as Timestamp).toDate()
+          : DateTime.now(),
       location: map['location'] is String ? map['location'] : null,
       jobUrl: map['jobUrl'] is String ? map['jobUrl'] : null,
       notes: map['notes'] is String ? map['notes'] : null,

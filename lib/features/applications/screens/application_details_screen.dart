@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:job_application_tracker/features/applications/models/job_application.dart';
 import 'package:job_application_tracker/features/applications/providers/application_provider.dart';
 import 'package:job_application_tracker/features/applications/screens/edit_application_screen.dart';
+import 'package:intl/intl.dart';
 
 class ApplicationDetailsScreen extends ConsumerStatefulWidget {
   final JobApplication application;
@@ -292,7 +293,7 @@ class _ApplicationDetailsScreenState
               ),
               const SizedBox(width: 4),
               Text(
-                "Applied: ${job.appliedDate}",
+                "Applied: ${DateFormat('d MMM yyyy').format(job.appliedDate)}",
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class ApplicationCard extends StatelessWidget {
   final String companyName;
   final String jobRole;
   final String? location;
   final String status;
-  final String appliedDate;
+  final DateTime appliedDate;
   final String logoUrl;
 
   const ApplicationCard({
@@ -157,7 +158,7 @@ class ApplicationCard extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                "Applied on $appliedDate",
+                "Applied on ${DateFormat('d MMM yyyy').format(appliedDate)}",
                 style: const TextStyle(
                   color: Color(0xFF6B7280),
                   fontSize: 13,

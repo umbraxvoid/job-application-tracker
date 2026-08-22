@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:job_application_tracker/features/applications/models/job_application.dart';
 import 'package:job_application_tracker/features/applications/providers/application_provider.dart';
+import 'package:intl/intl.dart';
 
 class AddApplicationScreen extends ConsumerStatefulWidget {
   const AddApplicationScreen({super.key});
@@ -29,7 +30,7 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
   final String _defaultLogoUrl = 'assets/images/default.webp';
   final List<String> _companyLogos = [
     'default', // Default
-    'amzon',
+    'amazon',
     'flipkart',
     'google',
     'meta',
@@ -43,7 +44,7 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
   late String _selectedLogo; // State for the selected logo
 
   final _formKey = GlobalKey<FormState>();
-  String? date;
+  DateTime? date;
   bool isLoading = false;
 
   @override
@@ -106,8 +107,7 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
     );
     if (result == null) return;
     setState(() {
-      date =
-          "${result.day.toString().padLeft(2, '0')} - ${result.month.toString().padLeft(2, '0')} - ${result.year}";
+      date = result;
     });
   }
 
@@ -651,7 +651,9 @@ class _AddApplicationScreenState extends ConsumerState<AddApplicationScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  date ?? "Select a Date",
+                  date == null
+                      ? "Select a Date"
+                      : DateFormat('d MMM yyyy').format(date!),
                   style: TextStyle(
                     fontSize: 15,
                     color: date == null
