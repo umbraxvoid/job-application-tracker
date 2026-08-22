@@ -6,9 +6,9 @@ Users can add job applications, update their status, search and filter records, 
 
 ## Screenshots
 
-| Applications | Add Application | Application Details |
-| --- | --- | --- |
-| ![Applications](./screenshots/home.jpg) | ![Add Application](screenshots/home.jpg) | ![Application Details](./screenshots/application_details.jpg) |
+| Applications | Add Application                                     | Application Details |
+| --- |-----------------------------------------------------| --- |
+| ![Applications](./screenshots/home.jpg) | ![Add Application](screenshots/add_application.jpg) | ![Application Details](./screenshots/application_details.jpg) |
 
 
 ## Features
